@@ -40,6 +40,11 @@ print(len(data)) # Print number of rows
 data.drop(['tile_count', 'fips', 'county', 'tile_count_residential', 'tile_count_nonresidential', 'state'], axis=1, inplace=True)
 data.drop(['total_panel_area', 'total_panel_area_residential', 'total_panel_area_nonresidential','solar_panel_area_divided_by_area','solar_panel_area_per_capita'], axis=1, inplace=True)
 data.drop(['solar_system_count','solar_system_count_residential','solar_system_count_nonresidential'], axis=1, inplace=True)
+data.drop(['electricity_price_industrial','electricity_price_commercial','incentive_count_nonresidential','incentive_nonresidential_state_level'], axis=1, inplace=True)
+data.drop(['heating_fuel_gas_rate','heating_fuel_electricity_rate','heating_fuel_fuel_oil_kerosene_rate','heating_fuel_coal_coke_rate','heating_fuel_solar_rate','heating_fuel_other_rate','heating_fuel_none_rate'], axis=1, inplace=True)
+data.drop(['electricity_price_transportation','electricity_price_overall','electricity_consume_commercial','electricity_consume_industrial','electricity_consume_total'], axis=1, inplace=True)
+data.drop(['heating_fuel_coal_coke','heating_fuel_electricity','heating_fuel_fuel_oil_kerosene','heating_fuel_gas','heating_fuel_housing_unit_count','heating_fuel_none','heating_fuel_other','heating_fuel_solar'], axis=1, inplace=True)
+
 
 # Drop rows with missing data in at least one column
 data.dropna(inplace=True)
