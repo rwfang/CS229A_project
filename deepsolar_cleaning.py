@@ -44,6 +44,9 @@ data.drop(['electricity_price_industrial','electricity_price_commercial','incent
 data.drop(['heating_fuel_gas_rate','heating_fuel_electricity_rate','heating_fuel_fuel_oil_kerosene_rate','heating_fuel_coal_coke_rate','heating_fuel_solar_rate','heating_fuel_other_rate','heating_fuel_none_rate'], axis=1, inplace=True)
 data.drop(['electricity_price_transportation','electricity_price_overall','electricity_consume_commercial','electricity_consume_industrial','electricity_consume_total'], axis=1, inplace=True)
 data.drop(['heating_fuel_coal_coke','heating_fuel_electricity','heating_fuel_fuel_oil_kerosene','heating_fuel_gas','heating_fuel_housing_unit_count','heating_fuel_none','heating_fuel_other','heating_fuel_solar'], axis=1, inplace=True)
+data.drop(['transportation_home_rate','transportation_car_alone_rate','transportation_walk_rate','transportation_carpool_rate','transportation_motorcycle_rate','transportation_bicycle_rate','transportation_public_rate'], axis=1, inplace=True)
+data.drop(['travel_time_less_than_10_rate','travel_time_10_19_rate','travel_time_20_29_rate','travel_time_30_39_rate','travel_time_40_59_rate','travel_time_60_89_rate','health_insurance_public_rate','health_insurance_none_rate','travel_time_average'], axis=1, inplace=True)
+data.drop(['occupation_construction_rate','occupation_public_rate','occupation_information_rate','occupation_finance_rate','occupation_education_rate','occupation_administrative_rate','occupation_manufacturing_rate','occupation_wholesale_rate','occupation_retail_rate','occupation_transportation_rate','occupation_arts_rate','occupation_agriculture_rate'], axis=1, inplace=True)
 
 
 # Drop rows with missing data in at least one column
