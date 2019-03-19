@@ -61,16 +61,10 @@ for column_name in X_test.columns:
 
 
 #https://towardsdatascience.com/hyperparameter-tuning-the-random-forest-in-python-using-scikit-learn-28d2aa77dd74
-       
-print("about to sample")
+
 X_sample_train = X_train.sample(n=None, frac=1/10, replace=False, weights=None, random_state=None, axis=None);
 y_sample_train = y_train.sample(n=None, frac=1/10, replace=False, weights=None, random_state=None, axis=None);
-print("finished sample")
-print(X_train.shape)
-print(y_train.shape)
 
-print(X_sample_train.shape)
-print(y_sample_train.shape)
 # Number of trees in random forest
 n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
 # Number of features to consider at every split
@@ -92,7 +86,6 @@ random_grid = {'n_estimators': n_estimators,
                'min_samples_leaf': min_samples_leaf,
                'bootstrap': bootstrap}
 print(random_grid)
-print("starting random foret regressor");
 rf = RandomForestRegressor()
 # Random search of parameters, using 3 fold cross validation, 
 # search across 100 different combinations, and use all available cores
@@ -101,7 +94,6 @@ rf_random = RandomizedSearchCV(estimator = rf, param_distributions = random_grid
 print(rf_random)
 print(rf_random.fit(X_sample_train, np.ravel(y_sample_train, order = 1)))
 print(rf_random.best_params_)
-print("finished")
 # Print the mean absolute error
 best_random = rf_random.best_estimator_
 y_pred = best_random.predict(X_val) # Predict residential solar system density on validation set
@@ -113,8 +105,8 @@ print('Mean squared error: %.2f' % mean_squared_error(y_val, y_pred))
 # Print variance score, where 1 = perfect prediction
 print('Variance score: %.2f' % r2_score(y_val, y_pred))
 
-GRIDSEARCHCV
- Create the parameter grid based on the results of random search 
+#GRIDSEARCHCV
+#Create the parameter grid based on the results of random search 
 param_grid = {
     'bootstrap': [True],
     'max_depth': [10],
@@ -142,6 +134,26 @@ print('Mean squared error: %.2f' % mean_squared_error(y_val, y_pred))
 # Print variance score, where 1 = perfect prediction
 print('Variance score: %.2f' % r2_score(y_val, y_pred))
 
+#predict on training set:
+y_pred_training = best_grid.predict(X_train) # Predict residential solar system density on validation set
+y_train = y_train.values # Convert dataframe to numpy array
+y_pred_training = np.expand_dims(y_pred_training,1) # Expand dimensions to match y_train  
+print('Mean absolute error training: %.2f' % mean_absolute_error(y_train, y_pred_training))
+# Print the mean squared error
+print('Mean squared error training: %.2f' % mean_squared_error(y_train, y_pred_training))
+# Print variance score, where 1 = perfect prediction
+print('Variance score training: %.2f' % r2_score(y_train, y_pred_training))
+
+#predict on training set:
+y_pred_test = best_grid.predict(X_test) # Predict residential solar system density on validation set
+y_test = y_test.values # Convert dataframe to numpy array
+y_pred_test = np.expand_dims(y_pred_test,1) # Expand dimensions to match y_train  
+print('Mean absolute error testing: %.2f' % mean_absolute_error(y_test, y_pred_test))
+# Print the mean squared error
+print('Mean squared error testing: %.2f' % mean_squared_error(y_test, y_pred_test))
+# Print variance score, where 1 = perfect prediction
+print('Variance score testing: %.2f' % r2_score(y_test, y_pred_test))
+#
 #-----------------------K Means Neighbour ------------
 #https://www.analyticsvidhya.com/blog/2018/08/k-nearest-neighbor-introduction-regression-python/
 #k means neighbour training and predictions
@@ -159,8 +171,7 @@ for K in range(20):
 #plotting the rmse values against k values
 curve = pd.DataFrame(rmse_val) #elbow curve 
 curve.plot()
-
-print("starting");
+#
 #implementing GridsearchCV to decide value of k
 params = {'n_neighbors':[2,3,4,5,6,7,8,9, 10, 11, 12,13,14,15,16,17,18,19,20]}
 
@@ -171,22 +182,35 @@ model.fit(X_train,y_train)
 bestModel = model.best_params_
 print("best output", bestModel)
 
-
 modelBest = neighbors.KNeighborsRegressor(n_neighbors = 9)
 modelBest.fit(X_train, y_train)  #fit the model
-print("keep going")
-pred=modelBest.predict(X_val) #make prediction on test set
+pred=modelBest.predict(X_val) #make prediction
 print(pred.shape)
-print("keep going 2")
 y_val = y_val.values # Convert dataframe to numpy array
 print(y_val.shape)
-print("keep going 3")
 #y_pred = np.expand_dims(y_pred,1) # Expand dimensions to match y_val 
 print(y_pred.shape) 
-print("keep going 4")
 print('Mean absolute error: %.2f' % mean_absolute_error(y_val, pred))
 # Print the mean squared error
 print('Mean squared error: %.2f' % mean_squared_error(y_val, pred))
 # Print variance score, where 1 = perfect prediction
 print('Variance score: %.2f' % r2_score(y_val, pred))
-print("finished");
+y_pred_training = modelBest.predict(X_train) # Predict residential solar system density on validation set
+y_train = y_train.values # Convert dataframe to numpy array
+#y_pred_training = np.expand_dims(y_pred_training,1) # Expand dimensions to match y_train  
+print('Mean absolute error training: %.2f' % mean_absolute_error(y_train, y_pred_training))
+# Print the mean squared error
+print('Mean squared error training: %.2f' % mean_squared_error(y_train, y_pred_training))
+# Print variance score, where 1 = perfect prediction
+print('Variance score training: %.2f' % r2_score(y_train, y_pred_training))
+
+#predict on training set:
+y_pred_test = modelBest.predict(X_test) # Predict residential solar system density on validation set
+y_test = y_test.values # Convert dataframe to numpy array
+#y_pred_test = np.expand_dims(y_pred_test,1) # Expand dimensions to match y_train  
+print('Mean absolute error testing: %.2f' % mean_absolute_error(y_test, y_pred_test))
+# Print the mean squared error
+print('Mean squared error testing: %.2f' % mean_squared_error(y_test, y_pred_test))
+# Print variance score, where 1 = perfect prediction
+print('Variance score testing: %.2f' % r2_score(y_test, y_pred_test))
+
