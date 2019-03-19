@@ -8,7 +8,7 @@ Created on Fri Mar  1 12:42:31 2019
 
 """ This program applies a linear regression model with L2 regularization to
 the cleaned DeepSolar dataset. This model predicts residential solar system
-count per household.
+count per 1000 households.
 """
 
 import matplotlib.pyplot as plt
@@ -22,12 +22,63 @@ from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 from sklearn import preprocessing 
 import sys
 
-training_set = pd.read_csv('solar_training_set.csv', delimiter = ',')
-training_set.drop(['Unnamed: 0','Unnamed: 0.1'], axis=1, inplace=True)
-val_set = pd.read_csv('solar_val_set.csv', delimiter = ',')
-val_set.drop(['Unnamed: 0','Unnamed: 0.1'], axis=1, inplace=True)
-test_set = pd.read_csv('solar_test_set.csv', delimiter = ',')
-test_set.drop(['Unnamed: 0','Unnamed: 0.1'], axis=1, inplace=True)
+training_set_raw = pd.read_csv('solar_training_set.csv', delimiter = ',')
+training_set_raw.drop(['Unnamed: 0','Unnamed: 0.1'], axis=1, inplace=True)
+training_set_raw.drop(['race_asian','race_black_africa','race_indian_alaska','race_islander','race_other','race_two_more','race_white','total_area','unemployed','water_area','population','land_area','employed'], axis=1, inplace=True)
+training_set_raw.drop(['education_bachelor','education_college','education_doctoral','education_high_school_graduate','education_less_than_high_school','education_master','education_population','education_professional_school'], axis=1, inplace=True)
+training_set_raw.drop(['poverty_family_below_poverty_level','poverty_family_count','household_count','housing_unit_count','housing_unit_occupied_count','electricity_consume_residential'], axis=1, inplace=True)
+
+
+val_set_raw = pd.read_csv('solar_val_set.csv', delimiter = ',')
+val_set_raw.drop(['Unnamed: 0','Unnamed: 0.1'], axis=1, inplace=True)
+val_set_raw.drop(['race_asian','race_black_africa','race_indian_alaska','race_islander','race_other','race_two_more','race_white','total_area','unemployed','water_area','population','land_area','employed'], axis=1, inplace=True)
+val_set_raw.drop(['education_bachelor','education_college','education_doctoral','education_high_school_graduate','education_less_than_high_school','education_master','education_population','education_professional_school'], axis=1, inplace=True)
+val_set_raw.drop(['poverty_family_below_poverty_level','poverty_family_count','household_count','housing_unit_count','housing_unit_occupied_count','electricity_consume_residential'], axis=1, inplace=True)
+
+
+test_set_raw = pd.read_csv('solar_test_set.csv', delimiter = ',')
+test_set_raw.drop(['Unnamed: 0','Unnamed: 0.1'], axis=1, inplace=True)
+test_set_raw.drop(['race_asian','race_black_africa','race_indian_alaska','race_islander','race_other','race_two_more','race_white','total_area','unemployed','water_area','population','land_area','employed'], axis=1, inplace=True)
+test_set_raw.drop(['education_bachelor','education_college','education_doctoral','education_high_school_graduate','education_less_than_high_school','education_master','education_population','education_professional_school'], axis=1, inplace=True)
+test_set_raw.drop(['poverty_family_below_poverty_level','poverty_family_count','household_count','housing_unit_count','housing_unit_occupied_count','electricity_consume_residential'], axis=1, inplace=True)
+
+# Data preprocessing
+
+le = preprocessing.LabelEncoder()
+for column_name in training_set_raw.columns:
+    if training_set_raw[column_name].dtype == object:
+        training_set_raw[column_name] = le.fit_transform(training_set_raw[column_name])
+    else:
+        pass
+    
+for column_name in val_set_raw.columns:
+    if val_set_raw[column_name].dtype == object:
+        val_set_raw[column_name] = le.fit_transform(val_set_raw[column_name])
+    else:
+        pass
+
+for column_name in test_set_raw.columns:
+    if test_set_raw[column_name].dtype == object:
+        test_set_raw[column_name] = le.fit_transform(test_set_raw[column_name])
+    else:
+       pass
+   
+# Normalize data
+training_set = training_set_raw.values
+min_max_scaler = preprocessing.MinMaxScaler()
+training_set = min_max_scaler.fit_transform(training_set)
+training_set = pd.DataFrame(training_set, columns = training_set_raw.columns)
+
+val_set = val_set_raw.values
+#min_max_scaler = preprocessing.MinMaxScaler()
+val_set = min_max_scaler.fit_transform(val_set)
+val_set = pd.DataFrame(val_set, columns = val_set_raw.columns)
+
+test_set = test_set_raw.values
+#min_max_scaler = preprocessing.MinMaxScaler()
+test_set = min_max_scaler.fit_transform(test_set)
+test_set = pd.DataFrame(test_set, columns = test_set_raw.columns)
+
 
 y_train = training_set[['number_solar_system_per_1000_household']]
 training_set.drop('number_solar_system_per_1000_household', axis=1, inplace=True) # Remove y column
@@ -44,28 +95,8 @@ y_test = test_set[['number_solar_system_per_1000_household']]
 test_set.drop('number_solar_system_per_1000_household', axis=1, inplace=True) # Remove y column
 X_test = test_set
 
-# Data preprocessing
-le = preprocessing.LabelEncoder()
-for column_name in X_train.columns:
-    if X_train[column_name].dtype == object:
-        X_train[column_name] = le.fit_transform(X_train[column_name])
-    else:
-        pass
-    
-for column_name in X_val.columns:
-    if X_val[column_name].dtype == object:
-        X_val[column_name] = le.fit_transform(X_val[column_name])
-    else:
-        pass
-
-for column_name in X_test.columns:
-    if X_test[column_name].dtype == object:
-        X_test[column_name] = le.fit_transform(X_test[column_name])
-    else:
-       pass
-
 # Loop through alpha values: 1e-5, 1e03, 1e-1, 1e1, 1e2, find alpha that gives lowest MAE
-alpha_lst = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100]
+alpha_lst = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100, 1000, 10000]
 mae_lst = [] # List of mean absolute errors for the alphas
 coefs_lst = [] # List of coefficients arrays for alpha values
 loss_lst = [] # List of loss values for alpha values
@@ -118,41 +149,45 @@ for i in range(0,len(X_train_lst)):
     J_train_lst.append(mae_train)
 
 
-## Identify features with coefficients equal to zero
-#headers = np.array(X_train.columns.values) # List of column header names
-#coefs = model.coef_
-#zeros = np.where(coefs==0)[0]
-#num_nonzero = np.count_nonzero(coefs) # Number of nonzero coefficients
-#zero_lst = []
-#for ind in zeros:
-#    zero_lst.append(headers[ind])
-#
-## Remove features whose coefficients = 0
-#for feature in zero_lst:
-#    X_train.drop(feature, axis=1, inplace=True)
-#    X_val.drop(feature, axis=1, inplace=True)
-#    X_test.drop(feature, axis=1, inplace=True)
-#
-## Run model again with smaller set of 70 features
-#model = linear_model.Ridge(alpha = alph, max_iter = 1e5)
-#model.fit(X_train, y_train)
-#y_pred_1 = model.predict(X_val) # Predict residential solar system density on validation set
-#y_pred_1 = np.expand_dims(y_pred_1,1) # Expand dimensions to match y_val
-#mae = mean_absolute_error(y_val, y_pred_1)
-#
-## Rank 70 features based on coefficients
+# Identify features with coefficients equal to zero
+headers = np.array(X_train.columns.values) # List of column header names
+coefs = model.coef_[0]
+zeros = np.where(coefs==0)[0]
+nonzeros = np.where(coefs!=0)[0]
+num_nonzero = np.count_nonzero(coefs) # Number of nonzero coefficients
+zero_lst = []
+for ind in zeros:
+    zero_lst.append(headers[ind])
+nonzero_lst = []
+for ind in nonzeros:
+    nonzero_lst.append((headers[ind], abs(coefs[ind])))
+# Rank nonzero coef features based on absolute value of coefs
+nonzero_lst = sorted(nonzero_lst, key=lambda x: x[1])
 
+# Run trained model on test set
+y_pred_test = model.predict(X_test)
 
-# Print coefficients
+# Print coefficients for test
 print('Coefficients: \n', model.coef_)
 # Print the mean absolute error
-print('Mean absolute error: %.2f' % mean_absolute_error(y_val, y_pred))
+print('Mean absolute error: %.2f' % mean_absolute_error(y_test, y_pred_test))
 # Print the mean squared error
-print('Mean squared error: %.2f' % mean_squared_error(y_val, y_pred))
+print('Mean squared error: %.2f' % mean_squared_error(y_test, y_pred_test))
 # Print the root mean squared error
-print('Root mean squared error: %.2f' % math.sqrt(mean_squared_error(y_val, y_pred)))
+print('Root mean squared error: %.2f' % math.sqrt(mean_squared_error(y_test, y_pred_test)))
 # Print variance score, where 1 = perfect prediction
-print('Variance score: %.2f' % r2_score(y_val, y_pred))
+print('Variance score: %.2f' % r2_score(y_test, y_pred_test))
+
+## Print coefficients for validation
+#print('Coefficients: \n', model.coef_)
+## Print the mean absolute error
+#print('Mean absolute error: %.2f' % mean_absolute_error(y_val, y_pred))
+## Print the mean squared error
+#print('Mean squared error: %.2f' % mean_squared_error(y_val, y_pred))
+## Print the root mean squared error
+#print('Root mean squared error: %.2f' % math.sqrt(mean_squared_error(y_val, y_pred)))
+## Print variance score, where 1 = perfect prediction
+#print('Variance score: %.2f' % r2_score(y_val, y_pred))
 
 
 #loss1 = np.sum(np.absolute(y_pred - y_val))
@@ -173,8 +208,8 @@ plt.plot(alpha_lst, loss_lst)
 plt.xscale('log')
 plt.xlabel('alpha')
 plt.ylabel('Loss')
-plt.title('Loss as a function of the learning rate')
-#plt.savefig('L2_Loss_alpha.eps', format='eps', dpi=1000)
+plt.title('Loss as a function of the learning rate (L2 Regularization)')
+#plt.savefig('L2_loss_alpha.eps', format='eps', dpi=1000)
 plt.show()
 
 # Plot learning curves
@@ -187,22 +222,16 @@ plt.legend(["Training Error", "Validation Error"], loc='best')
 plt.xlabel('Training examples')
 plt.ylabel('Mean Absolute Error')
 plt.title('Learning Curves for L2 Regularization')
-#plt.savefig('L2_reg_learning_curve.eps', format='eps', dpi=1000)
+#plt.savefig('L2_learning_curve.eps', format='eps', dpi=1000)
 plt.show()
 
-
-
-## Forward step regression
-#(F, pvals) = f_regression(X_train, y_train.values.ravel(), center=True)
-#header_lst = list(X_train.columns.values) # List of column header names
-#feature_rank = [] # List of lists [header, F value, p value]
-#for i in range(0,len(header_lst)):
-#    add_lst = [header_lst[i], F[i], pvals[i]]
-#    feature_rank.append(add_lst)
-#
-## Remove "Unnamed" columns created during dataframe creation
-#del feature_rank[0]
-#del feature_rank[0]
-#    
-## Sort feature_rank list by largest F score
-#feature_rank.sort(key=lambda x:x[1])
+# Plot histogram of test error
+y_test = y_test.values
+test_error = y_test - y_pred_test
+plt.hist(test_error,500)
+plt.xlim(-0.1, 0.2)
+plt.xlabel('Error')
+plt.ylabel('Number of Test Examples')
+plt.title('Histogram of Test Error (L2 Regularization)')
+plt.savefig('L2_test_error_hist.eps', format='eps', dpi=1000)
+plt.show()
