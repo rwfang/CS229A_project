@@ -8,13 +8,14 @@ Created on Fri Mar  1 12:42:31 2019
 
 """ This program applies a linear regression model with L1 regularization to
 the cleaned DeepSolar dataset. This model predicts residential solar system
-count per household.
+count per 1000 households.
 """
 
 import matplotlib.pyplot as plt
 import math
 import numpy as np
 import pandas as pd
+import seaborn as sns
 import sklearn
 from sklearn import linear_model
 from sklearn.feature_selection import f_regression
@@ -41,6 +42,24 @@ test_set_raw.drop(['Unnamed: 0','Unnamed: 0.1'], axis=1, inplace=True)
 test_set_raw.drop(['race_asian','race_black_africa','race_indian_alaska','race_islander','race_other','race_two_more','race_white','total_area','unemployed','water_area','population','land_area','employed'], axis=1, inplace=True)
 test_set_raw.drop(['education_bachelor','education_college','education_doctoral','education_high_school_graduate','education_less_than_high_school','education_master','education_population','education_professional_school'], axis=1, inplace=True)
 test_set_raw.drop(['poverty_family_below_poverty_level','poverty_family_count','household_count','housing_unit_count','housing_unit_occupied_count','electricity_consume_residential'], axis=1, inplace=True)
+
+y_train_raw = training_set_raw['number_solar_system_per_1000_household']
+print('y_train', y_train_raw[:10])
+print('mean',np.mean(y_train_raw))
+print('std dev',np.std(y_train_raw))
+print('variance',np.var(y_train_raw))
+print('min value',np.min(y_train_raw))
+print('max value',np.max(y_train_raw))
+
+# Plot distribution of y_train values (number of solar systems per 1,000 households)
+plt.hist(y_train_raw,500)
+plt.xlim(0, 600)
+plt.yscale('log')
+plt.xlabel('Number of Solar Systems per 1,000 Households')
+plt.ylabel('Number of Data Examples')
+plt.title('Distribution of Training Data')
+#plt.savefig('training_data_hist.eps', format='eps', dpi=1000)
+plt.show()
 
 # Data preprocessing
 
@@ -70,12 +89,10 @@ training_set = min_max_scaler.fit_transform(training_set)
 training_set = pd.DataFrame(training_set, columns = training_set_raw.columns)
 
 val_set = val_set_raw.values
-#min_max_scaler = preprocessing.MinMaxScaler()
 val_set = min_max_scaler.fit_transform(val_set)
 val_set = pd.DataFrame(val_set, columns = val_set_raw.columns)
 
 test_set = test_set_raw.values
-#min_max_scaler = preprocessing.MinMaxScaler()
 test_set = min_max_scaler.fit_transform(test_set)
 test_set = pd.DataFrame(test_set, columns = test_set_raw.columns)
 
@@ -83,9 +100,6 @@ test_set = pd.DataFrame(test_set, columns = test_set_raw.columns)
 y_train = training_set[['number_solar_system_per_1000_household']]
 training_set.drop('number_solar_system_per_1000_household', axis=1, inplace=True) # Remove y column
 X_train = training_set
-
-#print('y_train', y_train[:10])
-#print('mean',np.mean(y_train))
 
 y_val = val_set[['number_solar_system_per_1000_household']]
 val_set.drop('number_solar_system_per_1000_household', axis=1, inplace=True) # Remove y column
@@ -96,13 +110,13 @@ test_set.drop('number_solar_system_per_1000_household', axis=1, inplace=True) # 
 X_test = test_set
 
 # Loop through alpha values: 1e-5, 1e03, 1e-1, 1e1, 1e2, find alpha that gives lowest MAE
-alpha_lst = [1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100]
+alpha_lst = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100]
 mae_lst = [] # List of mean absolute errors for the alphas
 coefs_lst = [] # List of coefficients arrays for alpha values
 loss_lst = [] # List of loss values for alpha values
 
 for a in alpha_lst:
-    mod = linear_model.Lasso(alpha = a, fit_intercept=True, normalize=True, max_iter=10000)
+    mod = linear_model.Lasso(alpha = a, fit_intercept=True, max_iter=20000)
     mod.fit(X_train, y_train)
     y_pred_temp = mod.predict(X_val) # Predict residential solar system density on validation set
     y_val_temp = y_val.values # Convert dataframe to numpy array
@@ -117,7 +131,7 @@ for a in alpha_lst:
 alph = alpha_lst[mae_lst.index(min(mae_lst))]
 
 # Create and train linear regression model with L1 regularization on training set
-model = linear_model.Lasso(alpha = alph, fit_intercept=True, normalize=True, max_iter=10000)
+model = linear_model.Lasso(alpha = alph, fit_intercept=True, max_iter=20000)
 model.fit(X_train, y_train)
 y_pred = model.predict(X_val) # Predict residential solar system density on validation set
 y_val = y_val.values # Convert dataframe to numpy array
@@ -133,7 +147,7 @@ J_val_lst = []
 for i in range(0,len(X_train_lst)):
     X_learn = X_train_lst[i]
     y_learn = y_train_lst[i]
-    mod_learn = linear_model.Lasso(alpha = alph, fit_intercept=True, max_iter=10000)
+    mod_learn = linear_model.Lasso(alpha = alph, fit_intercept=True, max_iter=20000)
     mod_learn.fit(X_learn, y_learn)
     y_pred_val = mod_learn.predict(X_val)
     y_pred_val = np.expand_dims(y_pred_val,1)
@@ -164,30 +178,32 @@ for ind in nonzeros:
 # Rank nonzero coef features based on absolute value of coefs
 nonzero_lst = sorted(nonzero_lst, key=lambda x: x[1])
 
-## Remove features whose coefficients = 0
-#for feature in zero_lst:
-#    X_train.drop(feature, axis=1, inplace=True)
-#    X_val.drop(feature, axis=1, inplace=True)
-#    X_test.drop(feature, axis=1, inplace=True)
-#
-## Run model again with smaller set of 70 features
-#model = linear_model.Lasso(alpha = alph, max_iter = 1e5)
-#model.fit(X_train, y_train)
-#y_pred_1 = model.predict(X_val) # Predict residential solar system density on validation set
-#y_pred_1 = np.expand_dims(y_pred_1,1) # Expand dimensions to match y_val
-#mae = mean_absolute_error(y_val, y_pred_1)
+# Run trained model on test set
+y_pred_test = model.predict(X_test)
 
-
-# Print coefficients
+# Print coefficients for test
 print('Coefficients: \n', model.coef_)
 # Print the mean absolute error
-print('Mean absolute error: %.2f' % mean_absolute_error(y_val, y_pred))
+print('Mean absolute error: %.2f' % mean_absolute_error(y_test, y_pred_test))
 # Print the mean squared error
-print('Mean squared error: %.2f' % mean_squared_error(y_val, y_pred))
+print('Mean squared error: %.2f' % mean_squared_error(y_test, y_pred_test))
 # Print the root mean squared error
-print('Root mean squared error: %.2f' % math.sqrt(mean_squared_error(y_val, y_pred)))
+print('Root mean squared error: %.2f' % math.sqrt(mean_squared_error(y_test, y_pred_test)))
 # Print variance score, where 1 = perfect prediction
-print('Variance score: %.2f' % r2_score(y_val, y_pred))
+print('Variance score: %.2f' % r2_score(y_test, y_pred_test))
+
+
+
+## Print coefficients for validation
+#print('Coefficients: \n', model.coef_)
+## Print the mean absolute error
+#print('Mean absolute error: %.2f' % mean_absolute_error(y_val, y_pred))
+## Print the mean squared error
+#print('Mean squared error: %.2f' % mean_squared_error(y_val, y_pred))
+## Print the root mean squared error
+#print('Root mean squared error: %.2f' % math.sqrt(mean_squared_error(y_val, y_pred)))
+## Print variance score, where 1 = perfect prediction
+#print('Variance score: %.2f' % r2_score(y_val, y_pred))
 
 
 #loss1 = np.sum(np.absolute(y_pred - y_val))
@@ -200,7 +216,7 @@ plt.xscale('log')
 plt.xlabel('alpha')
 plt.ylabel('Coefficients')
 plt.title('Lasso coefficients as a function of the learning rate')
-#plt.savefig('coefs_alpha.eps', format='eps', dpi=1000)
+#plt.savefig('L1_coefs_alpha.eps', format='eps', dpi=1000)
 plt.show()
 
 # Plot loss vs. alphas
@@ -208,8 +224,8 @@ plt.plot(alpha_lst, loss_lst)
 plt.xscale('log')
 plt.xlabel('alpha')
 plt.ylabel('Loss')
-plt.title('Loss as a function of the learning rate')
-#plt.savefig('Loss_alpha.eps', format='eps', dpi=1000)
+plt.title('Loss as a function of the learning rate (L1 Regularization)')
+#plt.savefig('L1_loss_alpha.eps', format='eps', dpi=1000)
 plt.show()
 
 # Plot learning curves
@@ -222,22 +238,18 @@ plt.legend(["Training Error", "Validation Error"], loc='best')
 plt.xlabel('Training examples')
 plt.ylabel('Mean Absolute Error')
 plt.title('Learning Curves for L1 Regularization')
-#plt.savefig('L1_reg_learning_curve.eps', format='eps', dpi=1000)
+#plt.savefig('L1_learning_curve.eps', format='eps', dpi=1000)
 plt.show()
 
+# Plot histogram of test error
+y_test = y_test.values
+y_pred_test = np.expand_dims(y_pred_test,1)
+test_error = y_test - y_pred_test
+plt.hist(test_error,500)
+plt.xlim(-0.1, 0.2)
+plt.xlabel('Error')
+plt.ylabel('Number of Test Examples')
+plt.title('Histogram of Test Error (L1 Regularization)')
+#plt.savefig('L1_test_error_hist.eps', format='eps', dpi=1000)
+plt.show()
 
-
-## Forward step regression
-#(F, pvals) = f_regression(X_train, y_train.values.ravel(), center=True)
-#header_lst = list(X_train.columns.values) # List of column header names
-#feature_rank = [] # List of lists [header, F value, p value]
-#for i in range(0,len(header_lst)):
-#    add_lst = [header_lst[i], F[i], pvals[i]]
-#    feature_rank.append(add_lst)
-#
-## Remove "Unnamed" columns created during dataframe creation
-#del feature_rank[0]
-#del feature_rank[0]
-#    
-## Sort feature_rank list by largest F score
-#feature_rank.sort(key=lambda x:x[1])
