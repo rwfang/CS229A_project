@@ -178,8 +178,22 @@ for ind in nonzeros:
 # Rank nonzero coef features based on absolute value of coefs
 nonzero_lst = sorted(nonzero_lst, key=lambda x: x[1])
 
+# Run trained model on training set
+y_pred_training = model.predict(X_train)
+
 # Run trained model on test set
 y_pred_test = model.predict(X_test)
+
+## Print coefficients for train
+#print('Coefficients: \n', model.coef_)
+## Print the mean absolute error
+#print('Mean absolute error: %.2f' % mean_absolute_error(y_train, y_pred_training))
+## Print the mean squared error
+#print('Mean squared error: %.2f' % mean_squared_error(y_train, y_pred_training))
+## Print the root mean squared error
+#print('Root mean squared error: %.2f' % math.sqrt(mean_squared_error(y_train, y_pred_training)))
+## Print variance score, where 1 = perfect prediction
+#print('Variance score: %.2f' % r2_score(y_train, y_pred_training))
 
 # Print coefficients for test
 print('Coefficients: \n', model.coef_)
@@ -191,7 +205,6 @@ print('Mean squared error: %.2f' % mean_squared_error(y_test, y_pred_test))
 print('Root mean squared error: %.2f' % math.sqrt(mean_squared_error(y_test, y_pred_test)))
 # Print variance score, where 1 = perfect prediction
 print('Variance score: %.2f' % r2_score(y_test, y_pred_test))
-
 
 
 ## Print coefficients for validation
